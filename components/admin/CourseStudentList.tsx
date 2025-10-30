@@ -183,7 +183,7 @@ const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, student
     const averageScore = students.length > 0 ? totalScoresSum / students.length : 0;
 
     const gradeDistribution: { [key: string]: number } = {
-        '4': 0, '3.5': 0, '3': 0, '2.5': 0, '2': 0, '1.5': 0, '1': 0, '0': 0
+        '4.0': 0, '3.5': 0, '3.0': 0, '2.5': 0, '2.0': 0, '1.5': 0, '1.0': 0, '0.0': 0
     };
     studentScores.forEach(s => {
         const gradeKey = s.grade.toFixed(1);
