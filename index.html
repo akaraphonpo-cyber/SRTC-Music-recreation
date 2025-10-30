@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SRTC Music & Recreation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    :root {
+      --font-sans: 'Prompt', 'Kanit', sans-serif;
+      --accent-color: 249, 115, 22; /* orange-500 */
+      --accent-color-hover: 234, 88, 12; /* orange-600 */
+      
+      /* New Light Theme Palette */
+      --text-primary: #0f172a; /* Black (slate-900) */
+      --text-secondary: #475569; /* Dark Gray (slate-600) */
+      --text-muted: #64748b; /* Gray (slate-500) */
+      --text-inverted: #ffffff; /* White */
+      --text-link-rgb: 29, 78, 216; /* Blue (blue-700) */
+      --text-danger-rgb: 220, 38, 38; /* Red (red-600) */
+      --text-success-rgb: 22, 163, 74; /* Green (green-600) */
+      --color-bronze-rgb: 154, 87, 25; /* Bronze for light mode */
+      --color-highlight-rgb: 99, 102, 241; /* Indigo for light mode */
+
+
+      --background-start-rgb: 226, 232, 240; /* slate-200 */
+      --background-end-rgb: 241, 245, 249; /* slate-100 */
+      --glass-bg: rgba(255, 255, 255, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.7);
+      --text-shadow-color: rgba(0, 0, 0, 0.05);
+      --input-bg: rgba(255, 255, 255, 0.5);
+      --input-border: #cbd5e1; /* slate-300 */
+      --input-focus-border: rgba(var(--accent-color), 1);
+      --scroll-track: #f1f5f9;
+      --scroll-thumb: #cbd5e1;
+      --scroll-thumb-hover: #94a3b8;
+    }
+
+    html[data-theme='dark'] {
+      /* New Dark Theme Palette */
+      --text-primary: #f1f5f9; /* White (slate-100) */
+      --text-secondary: #94a3b8; /* Light Gray (slate-400) */
+      --text-muted: #64748b; /* Gray (slate-500) */
+      --text-inverted: #0f172a; /* Black (slate-900) */
+      --text-link-rgb: 56, 189, 248; /* Bright Blue (sky-400) */
+      --text-danger-rgb: 248, 113, 113; /* Bright Red (red-400) */
+      --text-success-rgb: 74, 222, 128; /* Bright Green (green-400) */
+      --color-bronze-rgb: 205, 127, 50; /* Bronze */
+      --color-highlight-rgb: 205, 127, 50; /* Bronze for dark mode highlight */
+      
+      --background-start-rgb: 2, 6, 23; /* gray-950 */
+      --background-end-rgb: 30, 41, 59; /* slate-800 */
+      --glass-bg: rgba(30, 41, 59, 0.6);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-shadow-color: rgba(0, 0, 0, 0.2);
+      --input-bg: rgba(15, 23, 42, 0.5); /* slate-900 */
+      --input-border: #475569; /* slate-600 */
+      --scroll-track: #1e293b;
+      --scroll-thumb: #475569;
+      --scroll-thumb-hover: #64748b;
+    }
+    
+    html[data-theme-style='clear'] {
+      --glass-bg: rgba(255, 255, 255, 0.02);
+      --glass-border: rgba(255, 255, 255, 0.2);
+    }
+    
+    html[data-theme='dark'][data-theme-style='clear'] {
+       --glass-bg: rgba(15, 23, 42, 0.1);
+       --glass-border: rgba(255, 255, 255, 0.15);
+    }
+
+    html, body {
+      font-family: var(--font-sans);
+      scroll-behavior: smooth;
+      background-color: transparent;
+      color: var(--text-primary);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
+      z-index: -2;
+      transition: background 0.5s ease;
+    }
+
+    #background-wrap {
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    @keyframes blob-move {
+      0% { transform: translate(0px, 0px) scale(1); }
+      33% { transform: translate(40vw, -20vh) scale(1.2); }
+      66% { transform: translate(-30vw, 30vh) scale(0.8); }
+      100% { transform: translate(0px, 0px) scale(1); }
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      mix-blend-mode: screen;
+      filter: blur(70px);
+      animation: blob-move 20s infinite alternate;
+    }
+    
+    .blob1 { width: 400px; height: 400px; top: -150px; left: -150px; background: rgba(192, 132, 252, 0.4); animation-duration: 25s; } /* purple-400 */
+    .blob2 { width: 500px; height: 500px; top: -100px; right: -150px; background: rgba(251, 146, 60, 0.4); animation-duration: 22s; animation-delay: 3s;} /* orange-400 */
+    .blob3 { width: 350px; height: 350px; bottom: -150px; left: 20%; background: rgba(56, 189, 248, 0.4); animation-duration: 18s; animation-delay: 5s;} /* sky-400 */
+
+    /* Glassmorphism utility class */
+    .glass-card {
+        background: var(--glass-bg);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+        transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    
+    /* Magnifying glass effect for clear theme */
+    html[data-theme-style='clear'] .glass-card {
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15),
+                    inset 0 2px 2px 0 rgba(255, 255, 255, 0.6), 
+                    inset 0 -3px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    html[data-theme-style='clear'] .glass-card:hover {
+        transform: scale(1.02);
+    }
+
+
+    .text-shadow {
+        text-shadow: 0 1px 3px var(--text-shadow-color);
+    }
+    .btn-accent {
+        background-color: rgba(var(--accent-color), 1);
+        color: var(--text-inverted);
+    }
+     .btn-accent:hover {
+        background-color: rgba(var(--accent-color-hover), 1);
+    }
+    .btn-logout {
+        color: var(--text-secondary);
+    }
+    .btn-logout:hover {
+        background-color: rgba(var(--text-danger-rgb), 0.8);
+        color: var(--text-inverted);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--scroll-track); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+    
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'Kanit', 'sans-serif'],
+          },
+          colors: {
+            'accent': `rgba(var(--accent-color), <alpha-value>)`,
+            'accent-hover': `rgba(var(--accent-color-hover), <alpha-value>)`,
+          }
+        },
+      },
+    };
+  </script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.6.1",
+    "sweetalert2": "https://esm.sh/sweetalert2@^11.22.0",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.4.0/",
+    "immer": "https://esm.sh/immer@10.1.1"
+  }
+}
+</script>
+</head>
+<body>
+  <div id="background-wrap">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+  </div>
+  <div id="fb-root"></div>
+  <script async defer crossOrigin="anonymous" src="https://connect.facebook.net/th_TH/sdk.js#xfbml=1&version=v19.0"></script>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
