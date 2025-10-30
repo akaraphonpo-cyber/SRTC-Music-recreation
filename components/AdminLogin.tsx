@@ -21,16 +21,17 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  const commonInputClass = "appearance-none rounded-lg relative block w-full px-3 py-3.5 pr-10 shadow-sm focus:outline-none focus:ring-2 sm:text-sm transition-all";
+  const commonInputClass = "appearance-none rounded-lg relative block w-full px-3 py-3.5 pr-10 shadow-sm focus:outline-none sm:text-sm transition-all duration-300 ease-in-out";
   const style = {
     color: 'var(--text-primary)',
     backgroundColor: 'var(--input-bg)',
     border: '1px solid var(--input-border)',
     placeholderColor: 'var(--text-muted)'
   };
-  const focusStyle = {
+  const focusStyle: React.CSSProperties = {
       borderColor: 'var(--input-focus-border)',
-      boxShadow: `0 0 0 2px rgba(var(--accent-color), 0.3)`,
+      boxShadow: `0 0 0 3px rgba(var(--accent-color), 0.3)`,
+      transform: 'scale(1.02)',
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -45,24 +46,10 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
       } else {
         const errorMessage = response.message || 'An error occurred.';
         setError(errorMessage);
-        Swal.fire({
-          icon: 'error',
-          title: 'เข้าสู่ระบบไม่สำเร็จ',
-          text: errorMessage,
-          confirmButtonColor: 'rgb(var(--accent-color))',
-          customClass: swalCustomClass
-        });
       }
     } catch (err: any) {
         const errorMessage = err.message || 'An unexpected error occurred.';
         setError(errorMessage);
-        Swal.fire({
-          icon: 'error',
-          title: 'เกิดข้อผิดพลาด',
-          text: errorMessage,
-          confirmButtonColor: 'rgb(var(--accent-color))',
-          customClass: swalCustomClass
-        });
     } finally {
         setIsLoading(false);
     }
@@ -72,6 +59,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
       e.target.style.borderColor = 'var(--input-border)';
       e.target.style.boxShadow = 'none';
+      e.target.style.transform = 'scale(1)';
   };
 
   return (
@@ -143,7 +131,14 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-500 text-center mt-2">{error}</p>}
+          {error && (
+            <div className="flex items-center p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-center animate-fade-in">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" style={{color: 'rgb(var(--text-danger-rgb))'}} viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-sm" style={{color: 'rgb(var(--text-danger-rgb))'}}>{error}</p>
+            </div>
+          )}
 
           <div>
             <button

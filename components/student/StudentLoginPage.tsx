@@ -16,6 +16,7 @@ const swalCustomClass = {
 
 const StudentLoginPage: React.FC<StudentLoginPageProps> = ({ onLoginSuccess }) => {
   const [studentId, setStudentId] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,6 +38,11 @@ const StudentLoginPage: React.FC<StudentLoginPageProps> = ({ onLoginSuccess }) =
       setError('กรุณากรอกรหัสนักศึกษา 11 หลักให้ถูกต้อง');
       return;
     }
+    if (!/^[0-9]{9,10}$/.test(phoneNumber)) {
+        setError('กรุณากรอกเบอร์โทรศัพท์ 9-10 หลักให้ถูกต้อง');
+        return;
+    }
+
 
     setIsLoading(true);
     setError('');
@@ -44,8 +50,8 @@ const StudentLoginPage: React.FC<StudentLoginPageProps> = ({ onLoginSuccess }) =
     try {
       const response = await getStudentByStudentId(studentId);
       if (response.success) {
-        const studentExists = !!response.data;
-        if (studentExists) {
+        const studentData = response.data;
+        if (studentData && studentData.phoneNumber === phoneNumber) {
           Swal.fire({
             icon: 'success',
             title: 'เข้าสู่ระบบสำเร็จ',
@@ -58,7 +64,7 @@ const StudentLoginPage: React.FC<StudentLoginPageProps> = ({ onLoginSuccess }) =
           });
           onLoginSuccess(studentId);
         } else {
-          setError('ไม่พบรหัสนักศึกษานี้ในระบบ กรุณาตรวจสอบหรือทำการลงทะเบียนก่อน');
+          setError('รหัสนักศึกษาหรือเบอร์โทรศัพท์ไม่ถูกต้อง');
         }
       } else {
         throw new Error(response.message || 'ไม่สามารถตรวจสอบข้อมูลได้');
@@ -84,11 +90,11 @@ const StudentLoginPage: React.FC<StudentLoginPageProps> = ({ onLoginSuccess }) =
             เข้าสู่ระบบสำหรับนักศึกษา
           </h2>
           <p className="mt-2 text-center text-sm text-shadow" style={{color: 'var(--text-secondary)'}}>
-            กรุณากรอกรหัสนักศึกษา 11 หลักเพื่อเข้าสู่ระบบ
+            กรุณากรอกรหัสนักศึกษาและเบอร์โทรศัพท์เพื่อเข้าสู่ระบบ
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm">
+          <div className="rounded-md space-y-4">
             <div>
               <label htmlFor="student-id-login" className="sr-only">
                 รหัสนักศึกษา
@@ -107,6 +113,27 @@ const StudentLoginPage: React.FC<StudentLoginPageProps> = ({ onLoginSuccess }) =
                 placeholder="รหัสนักศึกษา"
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+             <div>
+              <label htmlFor="phone-number-login" className="sr-only">
+                เบอร์โทรศัพท์
+              </label>
+              <input
+                id="phone-number-login"
+                name="phoneNumber"
+                type="tel"
+                required
+                pattern="[0-9]{9,10}"
+                title="กรุณากรอกเบอร์โทรศัพท์ 9-10 หลัก"
+                className={commonInputClass}
+                style={style}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                placeholder="เบอร์โทรศัพท์"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
                 disabled={isLoading}
               />
             </div>
