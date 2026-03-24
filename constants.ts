@@ -1,5 +1,5 @@
 
-import { Prefix, ClassLevel, Department, Course, RegistrationDay, ActivityStatus } from './types';
+import { Prefix, ClassLevel, Department, Course, RegistrationDay, ActivityStatus, AnnouncementImportance, AttendanceStatus } from './types';
 
 export const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRpd5P0HUgTBonMW7INRYRPYW8OTnylTuQqJJgNizwS8eedA8NYD8584_-hn1qn4BT/exec';
 export const SRTC_LOGO_URL = 'https://www.srtc.ac.th/2020/images/%E0%B8%95%E0%B8%81%E0%B9%81%E0%B8%95%E0%B9%88%E0%B8%87/%E0%B8%AA%E0%B8%B3%E0%B9%80%E0%B8%99%E0%B8%B2%E0%B8%82%E0%B8%AD%E0%B8%87_393004-140.png';
@@ -10,6 +10,26 @@ export const DEPARTMENT_OPTIONS = Object.values(Department);
 export const COURSE_OPTIONS = Object.values(Course);
 export const REGISTRATION_DAY_OPTIONS = Object.values(RegistrationDay);
 export const ACTIVITY_STATUS_OPTIONS = Object.values(ActivityStatus);
+export const ANNOUNCEMENT_IMPORTANCE_OPTIONS = Object.values(AnnouncementImportance);
+// FIX: Add ATTENDANCE_STATUS_OPTIONS to resolve import error in AttendanceManagement.tsx
+export const ATTENDANCE_STATUS_OPTIONS = Object.values(AttendanceStatus);
+
+export const PORTFOLIO_CATEGORIES = [
+  'กิจกรรมดนตรี',
+  'กีฬา E-sport',
+  'กิจกรรมนันทนาการ',
+  'ผลงานนักศึกษา',
+  'อื่นๆ',
+] as const;
+
+// Course Code Mapping
+export const COURSE_CODE_MAP: Record<string, string> = {
+    [Course.RECREATION]: '30000-1604',
+    [Course.LEADERSHIP]: '30000-1606',
+    [Course.QUALITY_MANAGEMENT]: '30001-1002',
+    [Course.DANCE_AEROBICS]: '30000-1605', 
+};
+
 
 // Generate time options from 8:00 to 19:00 in 30-minute intervals
 export const TIME_OPTIONS: string[] = [];
@@ -30,7 +50,7 @@ export const FORM_FIELDS_TH = {
   lastName: "นามสกุล",
   classLevel: "ระดับชั้น",
   department: "แผนกวิชา",
-  course: "วิชาที่ลงทะเบียน",
+  courses: "วิชาที่ลงทะเบียน",
   phoneNumber: "เบอร์โทรศัพท์",
   registrationDay: "วันที่ลงทะเบียนเรียน",
   registrationStartTime: "เวลาเริ่มต้น",

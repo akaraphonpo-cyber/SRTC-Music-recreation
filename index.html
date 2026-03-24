@@ -1,19 +1,64 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SRTC Music & Recreation</title>
+  <link rel="icon" href="https://www.srtc.ac.th/2020/images/%E0%B8%95%E0%B8%81%E0%B9%81%E0%B8%95%E0%B9%88%E0%B8%87/%E0%B8%AA%E0%B8%B3%E0%B9%80%E0%B8%99%E0%B8%B2%E0%B8%82%E0%B8%AD%E0%B8%87_393004-140.png" type="image/png">
+  <link rel="manifest" href="./manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&family=Prompt:wght@300;400;500;700&family=Racing+Sans+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    @font-face {
+      font-family: 'RushDriver';
+      src: url('https://firebasestorage.googleapis.com/v0/b/srtc-student-registration.firebasestorage.app/o/Font%2FRushDriver-Italic.otf?alt=media&token=30a69efc-6e9b-44f0-98cf-fc3b14535323') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'KlingonBlade';
+      src: url('https://firebasestorage.googleapis.com/v0/b/srtc-student-registration.firebasestorage.app/o/Font%2Fsd%20klingon%20blade2.ttf?alt=media&token=defe0284-21c8-46eb-8051-eb0413ca43df') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
     :root {
       --font-sans: 'Prompt', 'Kanit', sans-serif;
       --accent-color: 249, 115, 22; /* orange-500 */
       --accent-color-hover: 234, 88, 12; /* orange-600 */
       
-      /* New Light Theme Palette */
+      /* Dark Theme Palette (Default) */
+      --text-primary: #f1f5f9; /* White (slate-100) */
+      --text-secondary: #94a3b8; /* Light Gray (slate-400) */
+      --text-muted: #64748b; /* Gray (slate-500) */
+      --text-inverted: #0f172a; /* Black (slate-900) */
+      --text-link-rgb: 96, 165, 250; /* blue-400 */
+      --text-danger-rgb: 248, 113, 113; /* red-400 */
+      --text-success-rgb: 74, 222, 128; /* green-400 */
+      --color-gold-rgb: 255, 215, 0;
+      --color-silver-rgb: 192, 192, 192;
+      --color-bronze-rgb: 205, 127, 50; /* Bronze for dark mode */
+      --color-highlight-rgb: 129, 140, 248; /* Indigo for dark mode */
+
+      --background-start-rgb: 15, 23, 42; /* slate-900 */
+      --background-end-rgb: 30, 41, 59; /* slate-800 */
+      --glass-bg: rgba(30, 41, 59, 0.5);
+      --glass-border: rgba(51, 65, 85, 0.7);
+      --text-shadow-color: rgba(255, 255, 255, 0.03);
+      --input-bg: rgba(51, 65, 85, 0.5);
+      --input-border: #475569; /* slate-600 */
+      --input-focus-border: rgba(var(--accent-color), 1);
+      --scroll-track: #1e293b;
+      --scroll-thumb: #475569;
+      --scroll-thumb-hover: #64748b;
+    }
+
+    html[data-theme='light'] {
+      /* Light Theme Palette */
       --text-primary: #0f172a; /* Black (slate-900) */
       --text-secondary: #475569; /* Dark Gray (slate-600) */
       --text-muted: #64748b; /* Gray (slate-500) */
@@ -21,200 +66,207 @@
       --text-link-rgb: 29, 78, 216; /* Blue (blue-700) */
       --text-danger-rgb: 220, 38, 38; /* Red (red-600) */
       --text-success-rgb: 22, 163, 74; /* Green (green-600) */
+      --color-gold-rgb: 255, 215, 0; /* Gold */
+      --color-silver-rgb: 192, 192, 192; /* Silver */
       --color-bronze-rgb: 154, 87, 25; /* Bronze for light mode */
       --color-highlight-rgb: 99, 102, 241; /* Indigo for light mode */
 
-
       --background-start-rgb: 226, 232, 240; /* slate-200 */
       --background-end-rgb: 241, 245, 249; /* slate-100 */
-      --glass-bg: rgba(255, 255, 255, 0.45);
+      --glass-bg: rgba(255, 255, 255, 0.6);
       --glass-border: rgba(255, 255, 255, 0.7);
       --text-shadow-color: rgba(0, 0, 0, 0.05);
       --input-bg: rgba(255, 255, 255, 0.5);
       --input-border: #cbd5e1; /* slate-300 */
-      --input-focus-border: rgba(var(--accent-color), 1);
       --scroll-track: #f1f5f9;
       --scroll-thumb: #cbd5e1;
       --scroll-thumb-hover: #94a3b8;
     }
-
-    html[data-theme='dark'] {
-      /* New Dark Theme Palette */
-      --text-primary: #f1f5f9; /* White (slate-100) */
-      --text-secondary: #94a3b8; /* Light Gray (slate-400) */
-      --text-muted: #64748b; /* Gray (slate-500) */
-      --text-inverted: #0f172a; /* Black (slate-900) */
-      --text-link-rgb: 56, 189, 248; /* Bright Blue (sky-400) */
-      --text-danger-rgb: 248, 113, 113; /* Bright Red (red-400) */
-      --text-success-rgb: 74, 222, 128; /* Bright Green (green-400) */
-      --color-bronze-rgb: 205, 127, 50; /* Bronze */
-      --color-highlight-rgb: 205, 127, 50; /* Bronze for dark mode highlight */
-      
-      --background-start-rgb: 2, 6, 23; /* gray-950 */
-      --background-end-rgb: 30, 41, 59; /* slate-800 */
-      --glass-bg: rgba(30, 41, 59, 0.6);
-      --glass-border: rgba(255, 255, 255, 0.1);
-      --text-shadow-color: rgba(0, 0, 0, 0.2);
-      --input-bg: rgba(15, 23, 42, 0.5); /* slate-900 */
-      --input-border: #475569; /* slate-600 */
-      --scroll-track: #1e293b;
-      --scroll-thumb: #475569;
-      --scroll-thumb-hover: #64748b;
-    }
     
     html[data-theme-style='clear'] {
-      --glass-bg: rgba(255, 255, 255, 0.02);
-      --glass-border: rgba(255, 255, 255, 0.2);
+        --glass-bg: rgba(0,0,0,0);
+        --glass-border: rgba(0,0,0,0);
     }
-    
-    html[data-theme='dark'][data-theme-style='clear'] {
-       --glass-bg: rgba(15, 23, 42, 0.1);
-       --glass-border: rgba(255, 255, 255, 0.15);
+    html[data-theme='light'][data-theme-style='clear'] {
+        --glass-bg: rgba(0,0,0,0);
+        --glass-border: rgba(0,0,0,0);
     }
 
-    html, body {
+    html, body, input, select, textarea, button {
       font-family: var(--font-sans);
-      scroll-behavior: smooth;
-      background-color: transparent;
+    }
+    
+    option {
+      background-color: rgb(var(--background-end-rgb));
+      color: var(--text-primary);
+    }
+    
+    .font-sans {
+        font-family: var(--font-sans);
+    }
+
+    body {
+      background-image: linear-gradient(to bottom, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
       color: var(--text-primary);
     }
 
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
-      z-index: -2;
-      transition: background 0.5s ease;
+    /* --- UNO Game Styles --- */
+    .bg-pattern-uno {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 1500px;
+        height: 1500px;
+        background: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 0 L100 50 L50 100 L0 50 Z" fill="rgba(255,255,255,0.03)"/></svg>');
+        transform: translate(-50%, -50%) rotate(0deg);
+        animation: spinBg 120s linear infinite;
+        z-index: 0;
+        pointer-events: none;
     }
 
-    #background-wrap {
-      width: 100vw;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: -1;
-      overflow: hidden;
+    @keyframes spinBg {
+        from { transform: translate(-50%, -50%) rotate(0deg); }
+        to { transform: translate(-50%, -50%) rotate(360deg); }
     }
 
-    @keyframes blob-move {
-      0% { transform: translate(0px, 0px) scale(1); }
-      33% { transform: translate(40vw, -20vh) scale(1.2); }
-      66% { transform: translate(-30vw, 30vh) scale(0.8); }
-      100% { transform: translate(0px, 0px) scale(1); }
+    /* 3D Card Effects */
+    .card-3d-wrapper {
+        perspective: 1000px;
+        transform-style: preserve-3d;
+    }
+    .card-3d-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform-style: preserve-3d;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        border-radius: 12px;
+    }
+    .card-3d-inner.flipped {
+        transform: rotateY(180deg);
+    }
+    .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        border-radius: 12px;
+        border: 4px solid white;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    /* Front Face (The Number/Action) */
+    .card-front {
+        background-color: white;
+        transform: rotateY(0deg); /* Default Front */
+        font-family: 'Titan One', cursive;
+    }
+    /* Back Face (Logo) - Rotated 180 so it's the "back" when front is 0 */
+    /* NOTE: In the user prompt, they rotated front 180 and back 0. 
+       To make logic simpler in React (isFlipped=false -> Front visible), 
+       we keep Front at 0 and Back at 180.
+       If card is Face Down (isFlipped=true), we rotate Y 180. 
+    */
+    .card-back {
+        transform: rotateY(180deg);
+        background-color: #111;
+        color: white;
+        background-image: linear-gradient(135deg, #333 25%, transparent 25%), linear-gradient(225deg, #333 25%, transparent 25%), linear-gradient(45deg, #333 25%, transparent 25%), linear-gradient(315deg, #333 25%, transparent 25%);
+        background-position: 10px 0, 10px 0, 0 0, 0 0;
+        background-size: 20px 20px;
+        background-repeat: repeat;
+        flex-direction: column;
     }
 
-    .blob {
-      position: absolute;
-      border-radius: 50%;
-      mix-blend-mode: screen;
-      filter: blur(70px);
-      animation: blob-move 20s infinite alternate;
+    .card-logo-text {
+        font-family: 'Titan One', cursive;
+        color: #ffcc00;
+        text-shadow: 2px 2px 0 #d32f2f;
+        transform: rotate(-25deg);
+    }
+
+    .card-oval {
+        width: 80%;
+        height: 60%;
+        background: white;
+        border-radius: 50% / 40%;
+        transform: rotate(-25deg);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .card-main-number {
+        -webkit-text-stroke: 2px black;
+        text-shadow: 4px 4px 0px rgba(0,0,0,0.2);
     }
     
-    .blob1 { width: 400px; height: 400px; top: -150px; left: -150px; background: rgba(192, 132, 252, 0.4); animation-duration: 25s; } /* purple-400 */
-    .blob2 { width: 500px; height: 500px; top: -100px; right: -150px; background: rgba(251, 146, 60, 0.4); animation-duration: 22s; animation-delay: 3s;} /* orange-400 */
-    .blob3 { width: 350px; height: 350px; bottom: -150px; left: 20%; background: rgba(56, 189, 248, 0.4); animation-duration: 18s; animation-delay: 5s;} /* sky-400 */
-
-    /* Glassmorphism utility class */
-    .glass-card {
-        background: var(--glass-bg);
-        -webkit-backdrop-filter: blur(12px);
-        backdrop-filter: blur(12px);
-        border: 1px solid var(--glass-border);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
-        transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    .card-corner {
+        position: absolute;
+        font-family: 'Titan One', cursive;
+        color: white;
+        -webkit-text-stroke: 1px black;
     }
     
-    /* Magnifying glass effect for clear theme */
-    html[data-theme-style='clear'] .glass-card {
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15),
-                    inset 0 2px 2px 0 rgba(255, 255, 255, 0.6), 
-                    inset 0 -3px 3px 0 rgba(0, 0, 0, 0.1);
-    }
-    html[data-theme-style='clear'] .glass-card:hover {
-        transform: scale(1.02);
-    }
-
-
     .text-shadow {
-        text-shadow: 0 1px 3px var(--text-shadow-color);
-    }
-    .btn-accent {
-        background-color: rgba(var(--accent-color), 1);
-        color: var(--text-inverted);
-    }
-     .btn-accent:hover {
-        background-color: rgba(var(--accent-color-hover), 1);
-    }
-    .btn-logout {
-        color: var(--text-secondary);
-    }
-    .btn-logout:hover {
-        background-color: rgba(var(--text-danger-rgb), 0.8);
-        color: var(--text-inverted);
+        text-shadow: 1px 1px 3px var(--text-shadow-color);
     }
 
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--scroll-track); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+    .glass-card {
+      background-color: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
 
-    @keyframes fade-in {
-      from { opacity: 0; transform: translateY(-10px); }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--scroll-track);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--scroll-thumb);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--scroll-thumb-hover);
+    }
+    
+    /* Animation */
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .animate-fade-in {
-      animation: fade-in 0.3s ease-out forwards;
+    /* Animated Blobs */
+    @keyframes blob {
+      0% { transform: translate(0px, 0px) scale(1); }
+      33% { transform: translate(30px, -50px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+      100% { transform: translate(0px, 0px) scale(1); }
     }
-    
+    .animate-blob {
+      animation: blob 7s infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) skewX(-12deg); }
+      100% { transform: translateX(200%) skewX(-12deg); }
+    }
   </style>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Prompt', 'Kanit', 'sans-serif'],
-          },
-          colors: {
-            'accent': `rgba(var(--accent-color), <alpha-value>)`,
-            'accent-hover': `rgba(var(--accent-color-hover), <alpha-value>)`,
-          }
-        },
-      },
-    };
-  </script>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.1.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
-    "react/": "https://esm.sh/react@^19.1.0/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.6.1",
-    "sweetalert2": "https://esm.sh/sweetalert2@^11.22.0",
-    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
-    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
-    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.4.0/",
-    "immer": "https://esm.sh/immer@10.1.1"
-  }
-}
-</script>
+
 </head>
 <body>
-  <div id="background-wrap">
-    <div class="blob blob1"></div>
-    <div class="blob blob2"></div>
-    <div class="blob blob3"></div>
-  </div>
-  <div id="fb-root"></div>
-  <script async defer crossOrigin="anonymous" src="https://connect.facebook.net/th_TH/sdk.js#xfbml=1&version=v19.0"></script>
   <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+  <script type="module" src="./index.tsx"></script>
 </body>
 </html>

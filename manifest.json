@@ -1,0 +1,21 @@
+
+{
+  "short_name": "SRTC M&R",
+  "name": "SRTC Music & Recreation",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#f97316",
+  "background_color": "#f1f5f9",
+  "icons": [
+    {
+      "src": "https://www.srtc.ac.th/2020/images/%E0%B8%95%E0%B8%81%E0%B9%81%E0%B8%95%E0%B9%88%E0%B8%87/%E0%B8%AA%E0%B8%B3%E0%B9%80%E0%B8%99%E0%B8%B2%E0%B8%82%E0%B8%AD%E0%B8%87_393004-140.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://www.srtc.ac.th/2020/images/%E0%B8%95%E0%B8%81%E0%B9%81%E0%B8%95%E0%B9%88%E0%B8%87/%E0%B8%AA%E0%B8%B3%E0%B9%80%E0%B8%99%E0%B8%B2%E0%B8%82%E0%B8%AD%E0%B8%87_393004-140.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

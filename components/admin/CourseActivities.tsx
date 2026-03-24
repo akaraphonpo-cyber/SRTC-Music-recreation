@@ -1,28 +1,19 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
-import { Course, CourseConfig, Activity, ActivityStatus } from '../../types';
-import { addActivity, updateActivity, deleteActivity } from '../../services/googleSheetService';
+import { Course, CourseConfig, Activity, ActivityStatus, StudentWithId } from '../../types';
+import { addActivity, updateActivity, deleteActivity } from '../../services/courseService';
+import { useNotification } from '../../contexts/NotificationContext';
 import { ACTIVITY_STATUS_OPTIONS } from '../../constants';
-import LoadingSpinner from '../LoadingSpinner';
-import Modal from '../Modal';
-// @ts-ignore
-import Swal from 'sweetalert2';
+import LoadingSpinner from '../common/LoadingSpinner';
+import Modal from '../common/Modal';
+import { flattenGradingConfig, FlatGradingItem } from '../../utils/grades';
 
 interface CourseActivitiesProps {
   courseName: Course;
   courseConfig: CourseConfig;
   onDataRefresh: () => void;
+  allStudents: StudentWithId[]; // Added for student verification
 }
-
-interface FlatGradingItem {
-  key: string;
-  label: string;
-}
-
-const swalCustomClass = {
-  popup: 'glass-card rounded-2xl',
-  title: 'text-shadow',
-  htmlContainer: 'text-shadow',
-};
 
 const emptyActivity: Omit<Activity, 'id' | 'createdAt'> = {
   gradingComponentKey: '',
@@ -32,11 +23,12 @@ const emptyActivity: Omit<Activity, 'id' | 'createdAt'> = {
   dueDate: '',
 };
 
-const CourseActivities: React.FC<CourseActivitiesProps> = ({ courseName, courseConfig, onDataRefresh }) => {
+const CourseActivities: React.FC<CourseActivitiesProps> = ({ courseName, courseConfig, onDataRefresh, allStudents }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<Partial<Activity>>(emptyActivity);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const notification = useNotification();
 
   const activities = useMemo(() => {
     // FIX: Explicitly type `a` and `b` as `Activity` to resolve TypeScript error.
@@ -45,23 +37,7 @@ const CourseActivities: React.FC<CourseActivitiesProps> = ({ courseName, courseC
   
   const flattenedGradingItems = useMemo((): FlatGradingItem[] => {
     if (!courseConfig.gradingConfig || !courseConfig.gradingConfigOrder) return [];
-    
-    const flatten = (config: any, order: string[], parentPath = '', parentLabel = ''): FlatGradingItem[] => {
-      let list: FlatGradingItem[] = [];
-      order.forEach(key => {
-        const component = config[key];
-        if (!component) return;
-        const currentPath = parentPath ? `${parentPath}.${key}` : key;
-        const currentLabel = parentLabel ? `${parentLabel} > ${component.label}` : component.label;
-        list.push({ key: currentPath, label: currentLabel });
-        if (component.subComponents && component.subComponentsOrder) {
-          list = list.concat(flatten(component.subComponents, component.subComponentsOrder, currentPath, currentLabel));
-        }
-      });
-      return list;
-    };
-    
-    return flatten(courseConfig.gradingConfig, courseConfig.gradingConfigOrder);
+    return flattenGradingConfig(courseConfig.gradingConfig, courseConfig.gradingConfigOrder);
   }, [courseConfig]);
 
   const openAddModal = () => {
@@ -91,7 +67,7 @@ const CourseActivities: React.FC<CourseActivitiesProps> = ({ courseName, courseC
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentActivity.title || !currentActivity.gradingComponentKey) {
-      Swal.fire({ title: 'ข้อมูลไม่ครบถ้วน', text: 'กรุณากรอกหัวข้อและเลือกหมวดหมู่คะแนน', icon: 'warning', customClass: swalCustomClass });
+      notification.addToast({ type: 'warning', title: 'ข้อมูลไม่ครบถ้วน', message: 'กรุณากรอกหัวข้อและเลือกหมวดหมู่คะแนน' });
       return;
     }
     
@@ -119,31 +95,25 @@ const CourseActivities: React.FC<CourseActivitiesProps> = ({ courseName, courseC
     if (response.success) {
       onDataRefresh();
       closeModal();
-      Swal.fire({ icon: 'success', title: 'สำเร็จ', text: response.message, timer: 1500, showConfirmButton: false, customClass: swalCustomClass });
+      notification.addToast({ type: 'success', title: 'สำเร็จ', message: response.message });
     } else {
-      Swal.fire({ title: 'เกิดข้อผิดพลาด', text: response.message, icon: 'error', customClass: swalCustomClass });
+      notification.addToast({ type: 'error', title: 'เกิดข้อผิดพลาด', message: response.message });
     }
     setIsSubmitting(false);
   };
   
   const handleDelete = (activity: Activity) => {
-      Swal.fire({
+      notification.showConfirmation({
           title: 'ยืนยันการลบ?',
-          text: `คุณต้องการลบกิจกรรม "${activity.title}" ใช่หรือไม่?`,
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: 'rgb(var(--text-danger-rgb))',
-          cancelButtonText: 'ยกเลิก',
-          confirmButtonText: 'ใช่, ลบเลย',
-          customClass: swalCustomClass
-      }).then(async (result) => {
-          if (result.isConfirmed) {
+          message: `คุณต้องการลบกิจกรรม "${activity.title}" ใช่หรือไม่?`,
+          confirmText: 'ใช่, ลบเลย',
+          onConfirm: async () => {
               const res = await deleteActivity(courseName, activity.id);
               if (res.success) {
                   onDataRefresh();
-                  Swal.fire({title: 'ลบสำเร็จ!', icon: 'success', timer: 1500, showConfirmButton: false, customClass: swalCustomClass});
+                  notification.addToast({type: 'success', title: 'ลบสำเร็จ!'});
               } else {
-                  Swal.fire({title: 'เกิดข้อผิดพลาด', text: res.message, icon: 'error', customClass: swalCustomClass});
+                  notification.addToast({type: 'error', title: 'เกิดข้อผิดพลาด', message: res.message});
               }
           }
       });
@@ -226,7 +196,7 @@ const CourseActivities: React.FC<CourseActivitiesProps> = ({ courseName, courseC
             </div>
         )}
 
-        <Modal isOpen={isModalOpen} onClose={closeModal} title={isEditing ? 'แก้ไขกิจกรรม' : 'เพิ่มกิจกรรมใหม่'}>
+        <Modal isOpen={isModalOpen} onClose={closeModal} title={isEditing ? 'แก้ไขกิจกรรม' : 'เพิ่มกิจกรรมใหม่'} size="fullscreen">
             <form onSubmit={handleSubmit} className="space-y-4">
             <div>
                 <label htmlFor="title" className="block text-sm font-medium" style={{color: 'var(--text-secondary)'}}>หัวข้อ</label>

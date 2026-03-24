@@ -1,6 +1,8 @@
 {
   "name": "SRTC Music & Recreation",
   "description": "A web application for Suratthani Technical College student registration, storing data in Google Sheets. Includes an admin panel for data management.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": [
+    "camera"
+  ],
   "prompt": ""
 }

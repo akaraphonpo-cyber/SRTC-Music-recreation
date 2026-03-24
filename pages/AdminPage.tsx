@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import AdminLogin from '../components/AdminLogin';
-import AdminDashboard from '../components/AdminDashboard';
-import { onAuthChange, signOutAdmin } from '../services/googleSheetService';
-// @ts-ignore
-import Swal from 'sweetalert2';
-import LoadingSpinner from '../components/LoadingSpinner';
+import AdminDashboard from '../components/admin/AdminDashboard';
+import { onAuthChange, signOutAdmin } from '../services/authService';
+import { useNotification } from '../contexts/NotificationContext';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const AdminPage: React.FC = () => {
   // Use null to represent the initial loading state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const notification = useNotification();
 
   useEffect(() => {
     // Subscribe to Firebase auth state changes
     const unsubscribe = onAuthChange((user) => {
-      setIsAuthenticated(!!user);
+      setIsAuthenticated(!!user && !user.isAnonymous);
     });
 
     // Cleanup subscription on unmount
@@ -27,18 +27,10 @@ const AdminPage: React.FC = () => {
   const handleLogout = async () => {
     await signOutAdmin();
     // onAuthChange will handle setting isAuthenticated to false
-    Swal.fire({
-        icon: 'info',
+    notification.addToast({
+        type: 'info',
         title: 'ออกจากระบบแล้ว',
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-        customClass: {
-            popup: 'glass-card'
-        }
-      });
+    });
   };
 
   const renderContent = () => {

@@ -1,18 +1,14 @@
+
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { StudentWithId, Course, StudentScores, CourseConfig } from '../../types';
-import { getCourseGradingConfig, getScoresForCourse } from '../../services/googleSheetService';
-import LoadingSpinner from '../LoadingSpinner';
-// @ts-ignore
-import Swal from 'sweetalert2';
+import { StudentWithId, Course, StudentScores, CourseConfig, Schedule } from '../../types';
+import { getCourseGradingConfig, getScoresForCourse } from '../../services/courseService';
+import { useNotification } from '../../contexts/NotificationContext';
+import { calculateTotal, calculateGrade } from '../../utils/grades';
+import { getStudentSchedule } from '../../utils/schedule';
+import LoadingSpinner from '../common/LoadingSpinner';
 import CourseActivities from './CourseActivities';
 
 // --- Reusable UI Components ---
-
-const swalCustomClass = {
-  popup: 'glass-card rounded-2xl',
-  title: 'text-shadow',
-  htmlContainer: 'text-shadow',
-};
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
   <div className="glass-card p-6 rounded-2xl flex items-center space-x-4 hover:-translate-y-1 transition-transform duration-300">
@@ -29,26 +25,32 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
 const BarChart: React.FC<{ data: { [key: string]: number }; title: string }> = ({ data, title }) => {
   const sortedData = Object.entries(data).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]));
   const maxValue = Math.max(...Object.values(data).map(Number), 1);
+  const total = Object.values(data).reduce((a, b) => a + b, 0);
   const colors = ['bg-sky-500', 'bg-amber-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-rose-500', 'bg-teal-500'];
 
   return (
     <div className="glass-card p-6 rounded-2xl h-full">
       <h3 className="text-lg font-semibold text-shadow mb-4" style={{color: 'var(--text-primary)'}}>{title}</h3>
       <div className="space-y-4">
-        {sortedData.length > 0 ? sortedData.map(([label, value], index) => (
-          <div key={label}>
-            <div className="flex justify-between items-center mb-1 text-shadow">
-              <span className="text-sm font-medium truncate pr-2" style={{color: 'var(--text-secondary)'}} title={`เกรด ${label}`}>เกรด {label}</span>
-              <span className="text-sm font-semibold" style={{color: 'var(--text-primary)'}}>{String(value)} คน</span>
+        {sortedData.length > 0 ? sortedData.map(([label, value], index) => {
+          const percentage = total > 0 ? ((Number(value) / total) * 100).toFixed(1) : '0.0';
+          return (
+            <div key={label}>
+              <div className="flex justify-between items-center mb-1 text-shadow">
+                <span className="text-sm font-medium truncate pr-2" style={{color: 'var(--text-secondary)'}} title={`เกรด ${label}`}>เกรด {label}</span>
+                <span className="text-sm font-semibold" style={{color: 'var(--text-primary)'}}>
+                  {String(value)} คน <span className="text-xs opacity-75">({percentage}%)</span>
+                </span>
+              </div>
+              <div className="w-full bg-black/10 rounded-full h-2.5">
+                <div
+                  className={`${colors[index % colors.length]} h-2.5 rounded-full transition-all duration-1000 ease-out`}
+                  style={{ width: `${(Number(value) / maxValue) * 100}%` }}
+                ></div>
+              </div>
             </div>
-            <div className="w-full bg-black/10 rounded-full h-2.5">
-              <div
-                className={`${colors[index % colors.length]} h-2.5 rounded-full transition-all duration-1000 ease-out`}
-                style={{ width: `${(Number(value) / maxValue) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-        )) : (
+          );
+        }) : (
             <div className="flex items-center justify-center h-48 text-center" style={{color: 'var(--text-muted)'}}>
                 <p>ยังไม่มีข้อมูลคะแนน</p>
             </div>
@@ -58,75 +60,30 @@ const BarChart: React.FC<{ data: { [key: string]: number }; title: string }> = (
   );
 };
 
+const SortIcon: React.FC<{ direction: 'asc' | 'desc' | 'none' }> = ({ direction }) => {
+    if (direction === 'asc') return <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" /></svg>;
+    if (direction === 'desc') return <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>;
+    return <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-30 group-hover:opacity-70" viewBox="0 0 20 20" fill="currentColor"><path d="M5 12a1 1 0 102 0V6.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L5 6.414V12zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 00-1.414-1.414L15 13.586V8z" /></svg>;
+};
 
 // --- Main Component ---
 
-interface CourseDashboardProps {
+interface CourseStudentListProps {
   courseName: string;
   students: StudentWithId[];
+  allStudents: StudentWithId[];
+  availableSchedules: Schedule[];
 }
 
-const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, students }) => {
+const CourseStudentList: React.FC<CourseStudentListProps> = ({ courseName, students, allStudents, availableSchedules }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'activities'>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | 'none'>('none');
   const [courseConfig, setCourseConfig] = useState<CourseConfig | null>(null);
   const [scores, setScores] = useState<Record<string, StudentScores['scores']>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const notification = useNotification();
 
-  // --- Calculation Logic (copied from GradingSystem.tsx) ---
-  const calculateTotal = (studentScores: StudentScores['scores'], config: CourseConfig | null) => {
-    if (!studentScores || !config) return 0;
-    
-    const { gradingConfig, gradingConfigOrder } = config;
-    let totalScore = 0;
-    gradingConfigOrder.forEach(key => {
-        const component = gradingConfig[key];
-        if (!component) return;
-        
-        const hasSubComponents = component.subComponents && component.subComponentsOrder && component.subComponentsOrder.length > 0;
-        
-        if (hasSubComponents) {
-            let rawStudentScore = 0;
-            let rawMaxScore = 0;
-            
-            const getRawScores = (subConfig: any, subOrder: string[], parentKey: string) => {
-                subOrder.forEach(subKey => {
-                    const subComponent = subConfig[subKey];
-                    if (!subComponent) return;
-                    const fullKey = `${parentKey}.${subKey}`;
-                    if (subComponent.subComponents && subComponent.subComponentsOrder && subComponent.subComponentsOrder.length > 0) {
-                        getRawScores(subComponent.subComponents, subComponent.subComponentsOrder, fullKey);
-                    } else {
-                        rawStudentScore += Number(studentScores[fullKey]) || 0;
-                        rawMaxScore += Number(subComponent.max) || 0;
-                    }
-                });
-            };
-            
-            getRawScores(component.subComponents!, component.subComponentsOrder!, key);
-            
-            if (rawMaxScore > 0) {
-                const scaledScore = (rawStudentScore / rawMaxScore) * component.max;
-                totalScore += scaledScore;
-            }
-        } else {
-            totalScore += Number(studentScores[key]) || 0;
-        }
-    });
-    return totalScore;
-  };
-
-  const calculateGrade = (totalScore: number) => {
-    if (totalScore >= 80) return 4;
-    if (totalScore >= 75) return 3.5;
-    if (totalScore >= 70) return 3;
-    if (totalScore >= 65) return 2.5;
-    if (totalScore >= 60) return 2;
-    if (totalScore >= 55) return 1.5;
-    if (totalScore >= 50) return 1;
-    return 0;
-  };
-  
   const fetchCourseData = useCallback(async (course: Course) => {
     setIsLoading(true);
     setCourseConfig(null);
@@ -139,23 +96,23 @@ const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, student
       if (configRes.success && configRes.data) {
         setCourseConfig(configRes.data);
       } else {
-        Swal.fire({title: 'Error', text: 'Could not load grading configuration.', icon: 'error', customClass: swalCustomClass});
+        notification.addToast({ type: 'error', title: 'Error', message: 'Could not load grading configuration.' });
       }
 
       if (scoresRes.success && scoresRes.data) {
         const scoresByStudentId = Object.entries(scoresRes.data).reduce((acc, [_, studentScore]) => {
-          acc[studentScore.studentId] = studentScore.scores;
+          acc[(studentScore as any).studentId] = (studentScore as any).scores;
           return acc;
         }, {} as Record<string, StudentScores['scores']>);
         setScores(scoresByStudentId);
       }
     } catch (error) {
       console.error("Error fetching course data:", error);
-      Swal.fire({title: 'Error', text: 'Failed to load course data.', icon: 'error', customClass: swalCustomClass});
+      notification.addToast({ type: 'error', title: 'Error', message: 'Failed to load course data.' });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [notification]);
 
   useEffect(() => {
     fetchCourseData(courseName as Course);
@@ -169,6 +126,7 @@ const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, student
         gradeDistribution: {},
         studentsAtRisk: [],
         passingCount: 0,
+        percentageAbove2: '0.0',
       };
     }
     
@@ -194,17 +152,70 @@ const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, student
 
     const studentsAtRisk = studentScores.filter(s => s.total < 50).sort((a,b) => a.total - b.total);
     const passingCount = studentScores.filter(s => s.total >= 50).length;
+    
+    const studentsAbove2 = studentScores.filter(s => s.grade >= 2.0).length;
+    const percentageAbove2 = students.length > 0 
+        ? ((studentsAbove2 / students.length) * 100).toFixed(1) 
+        : '0.0';
 
-    return { studentScores, averageScore, gradeDistribution, studentsAtRisk, passingCount };
+    return { studentScores, averageScore, gradeDistribution, studentsAtRisk, passingCount, percentageAbove2 };
 
   }, [students, scores, courseConfig]);
 
-  const filteredStudents = dashboardData.studentScores.filter(student =>
-    student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.studentId.includes(searchTerm)
-  );
+  const handleSort = () => {
+    setSortDirection(current => {
+      if (current === 'none') return 'asc';
+      if (current === 'asc') return 'desc';
+      return 'none';
+    });
+  };
+
+  const sortedStudents = useMemo(() => {
+    const filtered = dashboardData.studentScores.filter(student =>
+        student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.studentId.includes(searchTerm)
+    );
+
+    if (sortDirection !== 'none') {
+        return [...filtered].sort((a, b) => {
+            if (sortDirection === 'asc') {
+                return a.studentId.localeCompare(b.studentId);
+            } else {
+                return b.studentId.localeCompare(a.studentId);
+            }
+        });
+    }
+    return filtered;
+  }, [dashboardData.studentScores, searchTerm, sortDirection]);
   
+  const handleExportGrades = () => {
+      if (sortedStudents.length === 0) return;
+
+      const headers = ['Student ID', 'Name', 'Department', 'Total Score', 'Grade'];
+      const rows = sortedStudents.map(student => [
+          `"${student.studentId}"`,
+          `"${student.prefix}${student.firstName} ${student.lastName}"`,
+          student.department,
+          student.total.toFixed(2),
+          student.grade.toFixed(1)
+      ]);
+
+      const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.join(','))
+      ].join('\n');
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `grades_${courseName}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  };
+
   const TabButton: React.FC<{
     label: string;
     isActive: boolean;
@@ -219,7 +230,7 @@ const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, student
           : 'border-transparent hover:bg-black/10'
       }`}
       style={{
-        color: isActive ? 'rgb(var(--accent-color))' : 'var(--text-secondary)'
+        color: isActive ? 'rgb(var(--accent-color))' : 'rgba(var(--accent-color), 0.7)'
       }}
       role="tab"
       aria-selected={isActive}
@@ -229,10 +240,12 @@ const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, student
     </button>
   );
 
+  const headers = ['ID', 'ชื่อ-สกุล', 'แผนก', 'ตารางสอน', 'เบอร์โทร', 'คะแนนรวม', 'เกรด'];
+
   const renderDashboardContent = () => (
     <div className="space-y-8 animate-fade-in">
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard 
             title="จำนวนนักศึกษา" 
             value={students.length} 
@@ -247,6 +260,11 @@ const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, student
             title="นักศึกษาที่ผ่านเกณฑ์" 
             value={`${dashboardData.passingCount} / ${students.length}`} 
             icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+            />
+            <StatCard 
+            title="เกรด >= 2.00" 
+            value={`${dashboardData.percentageAbove2}%`} 
+            icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
             />
         </div>
 
@@ -290,36 +308,61 @@ const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, student
                 รายชื่อนักศึกษาทั้งหมด
                 </h2>
             </div>
-            <input
-                type="text"
-                placeholder="ค้นหา (ชื่อ, ID)..."
-                className="px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 w-full sm:w-auto"
-                style={{color: 'var(--text-primary)', backgroundColor: 'var(--input-bg)', border: '1px solid var(--input-border)', borderColor: 'var(--input-focus-border)'}}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+                <input
+                    type="text"
+                    placeholder="ค้นหา (ชื่อ, ID)..."
+                    className="px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 w-full sm:w-auto"
+                    style={{color: 'var(--text-primary)', backgroundColor: 'var(--input-bg)', border: '1px solid var(--input-border)', borderColor: 'var(--input-focus-border)'}}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <button 
+                    onClick={handleExportGrades}
+                    className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-white shadow-sm hover:opacity-90 transition-all whitespace-nowrap"
+                    style={{backgroundColor: 'rgb(var(--text-success-rgb))'}}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Export เกรด
+                </button>
+            </div>
             </div>
 
             <div className="overflow-x-auto">
-            {filteredStudents.length === 0 ? (
+            {sortedStudents.length === 0 ? (
                 <p className="text-center py-10" style={{color: 'var(--text-muted)'}}>ไม่พบข้อมูลนักศึกษา</p>
             ) : (
                 <table className="min-w-full">
                 <thead className="border-b" style={{borderColor: 'var(--glass-border)'}}>
                     <tr>
-                    {['ID', 'ชื่อ-สกุล', 'แผนก', 'เบอร์โทร', 'คะแนนรวม', 'เกรด'].map(header => (
+                    {headers.map(header => (
                         <th key={header} scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap text-shadow" style={{color: 'var(--text-secondary)'}}>
-                        {header}
+                          {header === 'ID' ? (
+                            <button onClick={handleSort} className="flex items-center space-x-1 group">
+                              <span>{header}</span>
+                              <SortIcon direction={sortDirection} />
+                            </button>
+                          ) : (
+                            header
+                          )}
                         </th>
                     ))}
                     </tr>
                 </thead>
                 <tbody className="divide-y" style={{borderColor: 'var(--glass-border)'}}>
-                    {filteredStudents.map((student) => (
+                    {sortedStudents.map((student) => (
                     <tr key={student.id} className="hover:bg-black/10 transition-colors">
                         <td className="px-4 py-3 whitespace-nowrap text-sm">{student.studentId}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">{student.prefix}{student.firstName} {student.lastName}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">{student.department}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          {(() => {
+                            const sched = getStudentSchedule(student, courseName as Course, availableSchedules);
+                            return sched.day ? `${sched.day} (${sched.startTime}-${sched.endTime})` : '-';
+                          })()}
+                        </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">{student.phoneNumber}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-bold" style={{color: 'rgb(var(--color-highlight-rgb))'}}>{student.total.toFixed(0)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-bold" style={{color: 'rgb(var(--text-success-rgb))'}}>{student.grade.toFixed(1)}</td>
@@ -365,6 +408,7 @@ const CourseStudentList: React.FC<CourseDashboardProps> = ({ courseName, student
                         courseName={courseName as Course}
                         courseConfig={courseConfig}
                         onDataRefresh={() => fetchCourseData(courseName as Course)}
+                        allStudents={allStudents}
                     />
                 )}
             </>

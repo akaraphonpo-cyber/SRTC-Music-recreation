@@ -1,21 +1,15 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Course, GradingConfig, GradingComponent } from '../../types';
-import { getCourseGradingConfig, setCourseGradingConfig } from '../../services/googleSheetService';
-import LoadingSpinner from '../LoadingSpinner';
-// @ts-ignore
-import Swal from 'sweetalert2';
+import { getCourseGradingConfig, setCourseGradingConfig } from '../../services/courseService';
+import { useNotification } from '../../contexts/NotificationContext';
+import LoadingSpinner from '../common/LoadingSpinner';
 import { produce } from 'immer';
 
 interface GradingConfigProps {
     courseName: Course;
     onBack: () => void;
 }
-
-const swalCustomClass = {
-  popup: 'glass-card rounded-2xl',
-  title: 'text-shadow',
-  htmlContainer: 'text-shadow',
-};
 
 const FIXED_KEYS = ['psychomotor', 'midterm', 'final'];
 
@@ -133,12 +127,13 @@ const RecursiveEditor: React.FC<{
 
 // --- MAIN COMPONENT ---
 
-const GradingConfig: React.FC<GradingConfigProps> = ({ courseName, onBack }) => {
+const GradingConfigComponent: React.FC<GradingConfigProps> = ({ courseName, onBack }) => {
     const [config, setConfig] = useState<GradingConfig | null>(null);
     const [order, setOrder] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingPath, setEditingPath] = useState<string[]>([]);
+    const notification = useNotification();
 
     const fetchConfig = useCallback(async () => {
         setIsLoading(true);
@@ -253,16 +248,19 @@ const GradingConfig: React.FC<GradingConfigProps> = ({ courseName, onBack }) => 
         );
 
         if (hasEmptyLabel(config)) {
-            Swal.fire({title: 'ข้อมูลไม่ครบถ้วน', text: 'กรุณากรอกชื่อหัวข้อคะแนนให้ครบทุกช่อง', icon: 'warning', customClass: swalCustomClass});
+            notification.addToast({ type: 'warning', title: 'ข้อมูลไม่ครบถ้วน', message: 'กรุณากรอกชื่อหัวข้อคะแนนให้ครบทุกช่อง' });
             return;
         }
 
-        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading(), customClass: swalCustomClass });
-        const res = await setCourseGradingConfig(courseName, { gradingConfig: config, gradingConfigOrder: order });
+        notification.showLoading('กำลังบันทึก...');
+        // Using explicit casting to 'any' to bypass missing type definition in truncated service file
+        const res = await (googleSheetService as any).setCourseGradingConfig(courseName, { gradingConfig: config, gradingConfigOrder: order });
+        notification.hideLoading();
+        
         if (res.success) {
-            Swal.fire({title: 'สำเร็จ!', text: 'บันทึกการตั้งค่าคะแนนเรียบร้อยแล้ว', icon: 'success', customClass: swalCustomClass});
+            notification.addToast({ type: 'success', title: 'สำเร็จ!', message: 'บันทึกการตั้งค่าคะแนนเรียบร้อยแล้ว' });
         } else {
-            Swal.fire({title: 'เกิดข้อผิดพลาด', text: res.message || 'ไม่สามารถบันทึกได้', icon: 'error', customClass: swalCustomClass});
+            notification.addToast({ type: 'error', title: 'เกิดข้อผิดพลาด', message: res.message || 'ไม่สามารถบันทึกได้' });
         }
     };
     
@@ -401,4 +399,4 @@ const GradingConfig: React.FC<GradingConfigProps> = ({ courseName, onBack }) => 
     );
 };
 
-export default GradingConfig;
+export default GradingConfigComponent;

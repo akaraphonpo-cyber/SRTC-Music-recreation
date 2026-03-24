@@ -1,0 +1,178 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: students
+    // Fields: studentId, name, email, photoUrl, coins, bonusXP, highScore, inventory, timestamp
+    //
+    // Collection: config
+    // Documents: registration, system, games
+    //
+    // Collection: announcements
+    // Fields: title, content, createdAt
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          request.auth.token.email == "akaraphon.po@srtc.ac.th");
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Students: Public read for leaderboards, Admin write, User self-write for game logic
+    match /students/{studentId} {
+      allow read: if true;
+      allow create: if true; // Allow public registration
+      allow update: if isAdmin() || isAuthenticated(); 
+      allow delete: if isAdmin();
+    }
+
+    // Config: Public read, Admin write
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Announcements: Public read, Admin write
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Academic Data: Public read, Admin write
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /course_catalog/{courseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /activities/{activityId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /schedules/{scheduleId} {
+      allow read: if true;
+      allow update: if isAdmin() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentStudents']) &&
+        math.abs(request.resource.data.currentStudents - resource.data.currentStudents) == 1
+      );
+      allow create, delete: if isAdmin();
+    }
+    match /scores/{scoreId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /attendance/{recordId} {
+      allow read: if true;
+      allow write: if isAdmin() || isAuthenticated();
+    }
+
+    // Games & Activity: Public read/write (Simplified for real-time interaction)
+    match /werewolf_rooms/{roomId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /uno_rooms/{roomId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /gacha_logs/{logId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /weeklyActivityLogs/{logId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /tournaments/{tournId} {
+      allow read: if true;
+      allow write: if isAdmin() || isAuthenticated();
+    }
+
+    // Portfolio & Marketplace
+    match /portfolio/{albumId} {
+      allow read: if true;
+      allow update: if isAuthenticated() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'loves', 'viewCount']) &&
+        (request.resource.data.likes == resource.data.likes + 1 || request.resource.data.likes == resource.data.likes) &&
+        (request.resource.data.loves == resource.data.loves + 1 || request.resource.data.loves == resource.data.loves) &&
+        (request.resource.data.viewCount == resource.data.viewCount + 1 || request.resource.data.viewCount == resource.data.viewCount)
+      );
+      allow create, delete: if isAuthenticated();
+    }
+    match /marketplace/{listingId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Singing & Music Production (Missing previously)
+    match /singing_records/{recordId} {
+      allow read: if true;
+      allow write: if isAdmin() || isAuthenticated();
+    }
+    match /music_production_records/{recordId} {
+      allow read: if true;
+      allow write: if isAdmin() || isAuthenticated();
+    }
+    
+    // Recreation & Creative Content Groups
+    match /recreation_groups/{groupId} {
+      allow read: if true;
+      allow write: if isAdmin() || isAuthenticated();
+    }
+    match /creative_content_groups/{groupId} {
+      allow read: if true;
+      allow write: if isAdmin() || isAuthenticated();
+    }
+
+    // Videos
+    match /videos/{videoId} {
+      allow read: if true;
+      allow update: if isAdmin() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']) &&
+        request.resource.data.viewCount == resource.data.viewCount + 1
+      );
+      allow create, delete: if isAdmin();
+    }
+
+    // Site Stats
+    match /site/stats {
+      allow read: if true;
+      allow write: if true; 
+    }
+    
+    // Users collection for RBAC
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

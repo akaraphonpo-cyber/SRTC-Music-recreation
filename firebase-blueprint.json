@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "Student profile and registration data",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoUrl": { "type": "string" },
+        "coins": { "type": "number" },
+        "bonusXP": { "type": "number" },
+        "highScore": { "type": "number" },
+        "inventory": { "type": "object" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "name"]
+    },
+    "SystemConfig": {
+      "title": "SystemConfig",
+      "description": "Global system settings",
+      "type": "object",
+      "properties": {
+        "term": { "type": "string" },
+        "year": { "type": "string" },
+        "teacherName": { "type": "string" },
+        "roomMapping": { "type": "object" },
+        "classGroupAliases": { "type": "object" },
+        "lineChannelAccessToken": { "type": "string" },
+        "lineDefaultTargetId": { "type": "string" },
+        "groupLineTargetIds": { "type": "object" }
+      }
+    },
+    "RegistrationStatus": {
+      "title": "RegistrationStatus",
+      "description": "Status of the registration period",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["OPEN", "CLOSED"] },
+        "allowNewRegistration": { "type": "boolean" },
+        "registrationPeriod": { "type": "object" }
+      }
+    },
+    "Course": {
+      "title": "Course",
+      "description": "Academic course details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "activities": { "type": "object" },
+        "gradingConfig": { "type": "object" },
+        "gradingConfigOrder": { "type": "array" }
+      }
+    },
+    "Score": {
+      "title": "Score",
+      "description": "Student scores for a specific course",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "course": { "type": "string" },
+        "scores": { "type": "object" }
+      }
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Attendance record for a student",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "course": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "System announcement",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "students": {
+      "schema": "Student",
+      "description": "Collection of student documents"
+    },
+    "config/registration": {
+      "schema": "RegistrationStatus",
+      "description": "Registration status document"
+    },
+    "config/system": {
+      "schema": "SystemConfig",
+      "description": "System configuration document"
+    },
+    "courses": {
+      "schema": "Course",
+      "description": "Academic courses"
+    },
+    "scores": {
+      "schema": "Score",
+      "description": "Student academic scores"
+    },
+    "attendance": {
+      "schema": "Attendance",
+      "description": "Attendance records"
+    },
+    "announcements": {
+      "schema": "Announcement",
+      "description": "System announcements"
+    }
+  }
+}

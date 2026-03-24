@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import StudentLoginPage from '../components/student/StudentLoginPage';
 import StudentDashboardPage from '../components/student/StudentDashboardPage';
-// @ts-ignore
-import Swal from 'sweetalert2';
+import { useNotification } from '../contexts/NotificationContext';
+import { ensureGameAuth } from '../services/authService';
 
 const STUDENT_AUTH_KEY = 'srtc_student_auth_id';
 
@@ -10,10 +10,12 @@ const StudentPortalPage: React.FC = () => {
   const [authenticatedStudentId, setAuthenticatedStudentId] = useState<string | null>(() => {
     return sessionStorage.getItem(STUDENT_AUTH_KEY);
   });
+  const notification = useNotification();
 
   useEffect(() => {
     if (authenticatedStudentId) {
       sessionStorage.setItem(STUDENT_AUTH_KEY, authenticatedStudentId);
+      void ensureGameAuth();
     } else {
       sessionStorage.removeItem(STUDENT_AUTH_KEY);
     }
@@ -25,15 +27,9 @@ const StudentPortalPage: React.FC = () => {
 
   const handleLogout = () => {
     setAuthenticatedStudentId(null);
-    Swal.fire({
-      icon: 'info',
+    notification.addToast({
+      type: 'info',
       title: 'ออกจากระบบแล้ว',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true,
-      customClass: { popup: 'glass-card' }
     });
   };
 
